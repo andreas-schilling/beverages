@@ -1,0 +1,8 @@
+﻿beverages:
+    http-port: 8080
+    db-name: beverages
+    
+spring:
+    data:
+        mongodb:
+            port: 27017
