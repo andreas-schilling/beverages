@@ -1,12 +1,12 @@
 package org.kiirun.beverages.web;
 
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
 import org.kiirun.beverages.application.BeveragesProperties;
 import org.kiirun.beverages.domain.Beverage;
-import org.kiirun.beverages.domain.BeverageException;
 import org.kiirun.beverages.service.BeveragesRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +52,7 @@ public class BeveragesResource extends AbstractVerticle {
         final Router router = Router.router(vertx);
 
         router.route("/").handler(routingContext -> {
-            LOGGER.info("Serving request");
+            LOGGER.info("Beverages overview");
             final HttpServerResponse response = routingContext.response();
             beveragesRepository.getAllBeverages().setHandler(allBeverages -> {
                 response.putHeader("content-type", "text/html").end("<h1>Beverages</h1><ul><li>"
@@ -79,15 +79,18 @@ public class BeveragesResource extends AbstractVerticle {
             routingContext.response().setStatusCode(400).end();
         }
         beveragesRepository.findBeverageByName(name).setHandler(beverage -> {
-            final Beverage toSell = beverage.result()
-                    .orElseThrow(() -> new BeverageException("Beverage " + name + " not found!"));
-            beveragesRepository.sellBeverage(toSell, 1L, terminal).setHandler(beverageSale -> {
-                if (beverageSale.succeeded()) {
-                    routingContext.response().setStatusCode(201)
-                            .putHeader("content-type", "application/json; charset=utf-8")
-                            .end(Json.encodePrettily(beverageSale.result()));
-                }
-            });
+            final Optional<Beverage> toSell = beverage.result();
+            if (toSell.isPresent()) {
+                beveragesRepository.sellBeverage(toSell.get(), 1L, terminal).setHandler(beverageSale -> {
+                    if (beverageSale.succeeded()) {
+                        routingContext.response().setStatusCode(201)
+                                .putHeader("content-type", "application/json; charset=utf-8")
+                                .end(Json.encodePrettily(beverageSale.result()));
+                    }
+                });
+            } else {
+                routingContext.fail(404);
+            }
         });
     }
 
