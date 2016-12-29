@@ -1,6 +1,5 @@
 package org.kiirun.beverages.web;
 
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -9,6 +8,7 @@ import org.kiirun.beverages.application.BeveragesProperties;
 import org.kiirun.beverages.domain.Beverage;
 import org.kiirun.beverages.service.BeverageSalesQuery;
 import org.kiirun.beverages.service.BeveragesRepository;
+import org.kiirun.beverages.service.BeveragesService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -33,11 +33,15 @@ public class BeveragesResource extends AbstractVerticle {
 
     private final BeveragesRepository beveragesRepository;
 
+    private final BeveragesService beveragesService;
+
     @Inject
-    public BeveragesResource(final BeveragesProperties properties, final BeveragesRepository beveragesRepository) {
+    public BeveragesResource(final BeveragesProperties properties, final BeveragesRepository beveragesRepository,
+            final BeveragesService beveragesService) {
         super();
         this.properties = properties;
         this.beveragesRepository = beveragesRepository;
+        this.beveragesService = beveragesService;
     }
 
     @Override
@@ -90,15 +94,7 @@ public class BeveragesResource extends AbstractVerticle {
         if (terminal == null) {
             routingContext.response().setStatusCode(400).end();
         }
-        beveragesRepository.findBeverageByName(name).setHandler(beverage -> {
-            final Optional<Beverage> toSell = beverage.result();
-            if (toSell.isPresent()) {
-                beveragesRepository.sellBeverage(toSell.get(), 1L, terminal)
-                        .setHandler(defaultToJsonHandler(201, routingContext));
-            } else {
-                routingContext.fail(404);
-            }
-        });
+        beveragesService.sellBeverage(name, 1L, terminal).setHandler(defaultToJsonHandler(201, routingContext));
     }
 
     private void getSoldBeverages(final RoutingContext routingContext) {
@@ -119,7 +115,7 @@ public class BeveragesResource extends AbstractVerticle {
     private void getAccumulatedBeverageSales(final RoutingContext routingContext) {
         final String name = routingContext.request().getParam("name");
         final String terminal = routingContext.request().getParam("terminal");
-        beveragesRepository.accumulateSales(BeverageSalesQuery.searchFor(name).withTerminal(terminal))
+        beveragesService.accumulateSales(BeverageSalesQuery.searchFor(name).withTerminal(terminal))
                 .setHandler(defaultToJsonHandler(200, routingContext));
     }
 

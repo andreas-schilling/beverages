@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
-import org.kiirun.beverages.domain.AccumulatedSales;
 import org.kiirun.beverages.domain.Beverage;
 import org.kiirun.beverages.domain.BeverageSale;
 import org.slf4j.Logger;
@@ -76,12 +75,6 @@ public class BeveragesRepository extends AbstractVerticle {
         mongoClient.find(BEVERAGE_SALES_COLLECTION, query.toQuery(), queryResult.completer());
         return queryResult.compose(result -> {
             return Future.succeededFuture(result.stream().map(BeverageSale::new).collect(Collectors.toList()));
-        });
-    }
-
-    public Future<AccumulatedSales> accumulateSales(final BeverageSalesQuery query) {
-        return findSoldBeverages(query).compose(foundSales -> {
-            return Future.succeededFuture(AccumulatedSales.calculatedFrom(foundSales));
         });
     }
 
