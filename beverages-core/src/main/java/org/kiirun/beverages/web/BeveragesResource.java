@@ -16,7 +16,9 @@ import org.springframework.stereotype.Component;
 import com.google.common.base.Strings;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
 import io.vertx.ext.web.Router;
@@ -76,13 +78,7 @@ public class BeveragesResource extends AbstractVerticle {
     }
 
     private void getAllBeverages(final RoutingContext routingContext) {
-        beveragesRepository.getAllBeverages().setHandler(allBeverages -> {
-            if (allBeverages.succeeded()) {
-                routingContext.response().setStatusCode(200)
-                        .putHeader("content-type", "application/json; charset=utf-8")
-                        .end(Json.encodePrettily(allBeverages.result()));
-            }
-        });
+        beveragesRepository.getAllBeverages().setHandler(defaultToJsonHandler(200, routingContext));
     }
 
     private void sellBeverage(final RoutingContext routingContext) {
@@ -97,13 +93,8 @@ public class BeveragesResource extends AbstractVerticle {
         beveragesRepository.findBeverageByName(name).setHandler(beverage -> {
             final Optional<Beverage> toSell = beverage.result();
             if (toSell.isPresent()) {
-                beveragesRepository.sellBeverage(toSell.get(), 1L, terminal).setHandler(beverageSale -> {
-                    if (beverageSale.succeeded()) {
-                        routingContext.response().setStatusCode(201)
-                                .putHeader("content-type", "application/json; charset=utf-8")
-                                .end(Json.encodePrettily(beverageSale.result()));
-                    }
-                });
+                beveragesRepository.sellBeverage(toSell.get(), 1L, terminal)
+                        .setHandler(defaultToJsonHandler(201, routingContext));
             } else {
                 routingContext.fail(404);
             }
@@ -121,13 +112,7 @@ public class BeveragesResource extends AbstractVerticle {
             getAccumulatedBeverageSales(routingContext);
         } else {
             beveragesRepository.findSoldBeverages(BeverageSalesQuery.searchFor(name).withTerminal(terminal))
-                    .setHandler(foundSales -> {
-                        if (foundSales.succeeded()) {
-                            routingContext.response().setStatusCode(200)
-                                    .putHeader("content-type", "application/json; charset=utf-8")
-                                    .end(Json.encodePrettily(foundSales.result()));
-                        }
-                    });
+                    .setHandler(defaultToJsonHandler(200, routingContext));
         }
     }
 
@@ -135,12 +120,17 @@ public class BeveragesResource extends AbstractVerticle {
         final String name = routingContext.request().getParam("name");
         final String terminal = routingContext.request().getParam("terminal");
         beveragesRepository.accumulateSales(BeverageSalesQuery.searchFor(name).withTerminal(terminal))
-                .setHandler(accumulatedSales -> {
-                    if (accumulatedSales.succeeded()) {
-                        routingContext.response().setStatusCode(200)
-                                .putHeader("content-type", "application/json; charset=utf-8")
-                                .end(Json.encodePrettily(accumulatedSales.result()));
-                    }
-                });
+                .setHandler(defaultToJsonHandler(200, routingContext));
+    }
+
+    private <T> Handler<AsyncResult<T>> defaultToJsonHandler(final int statusCode,
+            final RoutingContext routingContext) {
+        return asyncResult -> {
+            if (asyncResult.succeeded()) {
+                routingContext.response().setStatusCode(statusCode)
+                        .putHeader("content-type", "application/json; charset=utf-8")
+                        .end(Json.encodePrettily(asyncResult.result()));
+            }
+        };
     }
 }
