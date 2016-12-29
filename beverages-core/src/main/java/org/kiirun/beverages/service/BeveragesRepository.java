@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
+import org.kiirun.beverages.domain.AccumulatedSales;
 import org.kiirun.beverages.domain.Beverage;
 import org.kiirun.beverages.domain.BeverageSale;
 import org.slf4j.Logger;
@@ -51,9 +52,10 @@ public class BeveragesRepository extends AbstractVerticle {
         });
     }
 
-    public Future<Optional<Beverage>> findBeverageByName(final String name) {
+    public Future<Optional<Beverage>> findBeverageByName(final String beverageName) {
         final Future<List<JsonObject>> queryResult = Future.future();
-        mongoClient.find(BEVERAGES_COLLECTION, new JsonObject().put(Beverage._name, name), queryResult.completer());
+        mongoClient.find(BEVERAGES_COLLECTION, new JsonObject().put(Beverage._name, beverageName),
+                queryResult.completer());
         return queryResult.compose(result -> {
             return Future.succeededFuture(result.stream().map(Beverage::new).findFirst());
         });
@@ -69,15 +71,17 @@ public class BeveragesRepository extends AbstractVerticle {
         });
     }
 
-    public Future<List<BeverageSale>> findSoldBeverages(final String name, final String terminalId) {
+    public Future<List<BeverageSale>> findSoldBeverages(final BeverageSalesQuery query) {
         final Future<List<JsonObject>> queryResult = Future.future();
-        final JsonObject query = new JsonObject().put(BeverageSale._beverage + "." + Beverage._name, name);
-        if (terminalId != null) {
-            query.put(BeverageSale._terminalId, terminalId);
-        }
-        mongoClient.find(BEVERAGE_SALES_COLLECTION, query, queryResult.completer());
+        mongoClient.find(BEVERAGE_SALES_COLLECTION, query.toQuery(), queryResult.completer());
         return queryResult.compose(result -> {
             return Future.succeededFuture(result.stream().map(BeverageSale::new).collect(Collectors.toList()));
+        });
+    }
+
+    public Future<AccumulatedSales> accumulateSales(final BeverageSalesQuery query) {
+        return findSoldBeverages(query).compose(foundSales -> {
+            return Future.succeededFuture(AccumulatedSales.calculatedFrom(foundSales));
         });
     }
 

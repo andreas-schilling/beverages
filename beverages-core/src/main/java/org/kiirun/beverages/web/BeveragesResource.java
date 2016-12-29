@@ -7,10 +7,13 @@ import javax.inject.Inject;
 
 import org.kiirun.beverages.application.BeveragesProperties;
 import org.kiirun.beverages.domain.Beverage;
+import org.kiirun.beverages.service.BeverageSalesQuery;
 import org.kiirun.beverages.service.BeveragesRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+
+import com.google.common.base.Strings;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -61,12 +64,25 @@ public class BeveragesResource extends AbstractVerticle {
             });
         });
 
+        router.get("/api/beverages").handler(this::getAllBeverages);
         router.post("/api/beverages/:name/sales/:terminal").handler(this::sellBeverage);
         router.get("/api/beverages/:name/sales").handler(this::getSoldBeverages);
         router.get("/api/beverages/:name/sales/:terminal").handler(this::getSoldBeverages);
+        router.get("/api/sales").handler(this::getAccumulatedBeverageSales);
+        router.get("/api/sales/:terminal").handler(this::getAccumulatedBeverageSales);
         router.route("/api/*").failureHandler(ErrorHandler.create());
 
         return router;
+    }
+
+    private void getAllBeverages(final RoutingContext routingContext) {
+        beveragesRepository.getAllBeverages().setHandler(allBeverages -> {
+            if (allBeverages.succeeded()) {
+                routingContext.response().setStatusCode(200)
+                        .putHeader("content-type", "application/json; charset=utf-8")
+                        .end(Json.encodePrettily(allBeverages.result()));
+            }
+        });
     }
 
     private void sellBeverage(final RoutingContext routingContext) {
@@ -100,12 +116,31 @@ public class BeveragesResource extends AbstractVerticle {
             routingContext.response().setStatusCode(400).end();
         }
         final String terminal = routingContext.request().getParam("terminal");
-        beveragesRepository.findSoldBeverages(name, terminal).setHandler(foundSales -> {
-            if (foundSales.succeeded()) {
-                routingContext.response().setStatusCode(200)
-                        .putHeader("content-type", "application/json; charset=utf-8")
-                        .end(Json.encodePrettily(foundSales.result()));
-            }
-        });
+        final String mapping = Strings.nullToEmpty(routingContext.request().getParam("mapping"));
+        if (mapping.equals("accumulated")) {
+            getAccumulatedBeverageSales(routingContext);
+        } else {
+            beveragesRepository.findSoldBeverages(BeverageSalesQuery.searchFor(name).withTerminal(terminal))
+                    .setHandler(foundSales -> {
+                        if (foundSales.succeeded()) {
+                            routingContext.response().setStatusCode(200)
+                                    .putHeader("content-type", "application/json; charset=utf-8")
+                                    .end(Json.encodePrettily(foundSales.result()));
+                        }
+                    });
+        }
+    }
+
+    private void getAccumulatedBeverageSales(final RoutingContext routingContext) {
+        final String name = routingContext.request().getParam("name");
+        final String terminal = routingContext.request().getParam("terminal");
+        beveragesRepository.accumulateSales(BeverageSalesQuery.searchFor(name).withTerminal(terminal))
+                .setHandler(accumulatedSales -> {
+                    if (accumulatedSales.succeeded()) {
+                        routingContext.response().setStatusCode(200)
+                                .putHeader("content-type", "application/json; charset=utf-8")
+                                .end(Json.encodePrettily(accumulatedSales.result()));
+                    }
+                });
     }
 }
