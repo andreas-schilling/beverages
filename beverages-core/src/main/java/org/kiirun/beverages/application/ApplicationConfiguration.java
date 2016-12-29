@@ -4,6 +4,7 @@ import javax.inject.Inject;
 
 import org.kiirun.beverages.service.BeveragesRepository;
 import org.kiirun.beverages.service.BeveragesService;
+import org.kiirun.beverages.simulator.SalesSimulator;
 import org.kiirun.beverages.web.BeveragesResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +50,12 @@ public class ApplicationConfiguration {
     @Inject
     @Bean
     public BeveragesService beveragesService(final BeveragesRepository beveragesRepository) {
-        return new BeveragesService(beveragesRepository);
+        return new BeveragesService(beveragesRepository, eventBus());
+    }
+
+    @Bean
+    public SalesSimulator salesSimulator() {
+        return new SalesSimulator(eventBus());
     }
 
     @Inject
