@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -54,12 +55,14 @@ public class ApplicationConfiguration {
     }
 
     @Bean
+    @DependsOn("mongo")
     public SalesSimulator salesSimulator() {
         return new SalesSimulator(eventBus());
     }
 
     @Inject
     @Bean
+    @DependsOn("mongo")
     public MongoClient mongoClient(final MongoDbProperties commonProperties, final BeveragesProperties properties) {
         final JsonObject mongoConfig = new JsonObject(ImmutableMap.<String, Object>builder()
                 .put("port", commonProperties.getPort()).put("db_name", properties.getDbName()).build());
