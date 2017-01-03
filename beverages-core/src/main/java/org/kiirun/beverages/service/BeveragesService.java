@@ -6,6 +6,7 @@ import javax.inject.Inject;
 
 import org.kiirun.beverages.domain.AccumulatedSales;
 import org.kiirun.beverages.domain.BeverageSale;
+import org.kiirun.beverages.infrastructure.Addresses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -34,7 +35,7 @@ public class BeveragesService extends AbstractVerticle {
     @Override
     public void start(final Future<Void> startFuture) throws Exception {
         LOGGER.info("Starting beverages service...");
-        eventBus.consumer("beverages.core.sell", message -> {
+        eventBus.consumer(Addresses.BEVERAGE_SALE.address(), message -> {
             final String salesMessage = message.body().toString();
             LOGGER.info("Receiving sales message: " + salesMessage);
             final List<String> contents = Splitter.on(":").splitToList(salesMessage);

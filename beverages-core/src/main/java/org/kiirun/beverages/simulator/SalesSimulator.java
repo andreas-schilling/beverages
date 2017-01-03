@@ -5,6 +5,7 @@ import java.util.Random;
 
 import javax.inject.Inject;
 
+import org.kiirun.beverages.infrastructure.Addresses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -42,7 +43,7 @@ public class SalesSimulator extends AbstractVerticle {
             final String amount = String.valueOf(random.nextInt(5));
             final String terminal = TERMINALS.get(random.nextInt(TERMINALS.size()));
             final String salesMessage = Joiner.on(":").join(beverage, amount, terminal);
-            eventBus.publish("beverages.core.sell", salesMessage);
+            eventBus.publish(Addresses.BEVERAGE_SALE.address(), salesMessage);
             LOGGER.info("Sending sales message: " + salesMessage);
         });
         startFuture.complete();
