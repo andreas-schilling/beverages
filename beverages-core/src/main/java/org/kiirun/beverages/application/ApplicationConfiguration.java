@@ -54,7 +54,7 @@ public class ApplicationConfiguration {
     @Bean
     public BeveragesResource beveragesResource(final BeveragesRepository beveragesRepository,
             final BeveragesService beveragesService) {
-        return new BeveragesResource(beveragesRepository, beveragesService, mainRouter());
+        return new BeveragesResource(beveragesRepository, beveragesService, mainRouter(), eventBus());
     }
 
     @Inject

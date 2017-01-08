@@ -2,6 +2,7 @@ package org.kiirun.beverages.web;
 
 import javax.inject.Inject;
 
+import org.kiirun.beverages.infrastructure.Addresses;
 import org.kiirun.beverages.service.BeverageSalesQuery;
 import org.kiirun.beverages.service.BeveragesRepository;
 import org.kiirun.beverages.service.BeveragesService;
@@ -15,6 +16,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.Json;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -30,13 +32,16 @@ public class BeveragesResource extends AbstractVerticle {
 
     private final Router mainRouter;
 
+    private final EventBus eventBus;
+
     @Inject
     public BeveragesResource(final BeveragesRepository beveragesRepository, final BeveragesService beveragesService,
-            final Router mainRouter) {
+            final Router mainRouter, final EventBus eventBus) {
         super();
         this.beveragesRepository = beveragesRepository;
         this.beveragesService = beveragesService;
         this.mainRouter = mainRouter;
+        this.eventBus = eventBus;
     }
 
     @Override
@@ -54,6 +59,7 @@ public class BeveragesResource extends AbstractVerticle {
         router.get("/beverages/:name/sales/:terminal").handler(this::getSoldBeverages);
         router.get("/sales").handler(this::getAccumulatedBeverageSales);
         router.get("/sales/:terminal").handler(this::getAccumulatedBeverageSales);
+        router.put("/simulator").handler(this::triggerSimulator);
         router.route("/*").failureHandler(ErrorHandler.create());
 
         return router;
@@ -95,6 +101,11 @@ public class BeveragesResource extends AbstractVerticle {
         final String terminal = routingContext.request().getParam("terminal");
         beveragesService.accumulateSales(BeverageSalesQuery.searchFor(name).withTerminal(terminal))
                 .setHandler(defaultToJsonHandler(200, routingContext));
+    }
+
+    private void triggerSimulator(final RoutingContext routingContext) {
+        eventBus.send(Addresses.INFRASTRUCTURE.address(), "TRIGGER-SIMULATOR");
+        routingContext.response().setStatusCode(200).end();
     }
 
     private <T> Handler<AsyncResult<T>> defaultToJsonHandler(final int statusCode,

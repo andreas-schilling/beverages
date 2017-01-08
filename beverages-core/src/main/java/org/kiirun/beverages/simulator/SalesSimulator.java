@@ -29,6 +29,8 @@ public class SalesSimulator extends AbstractVerticle {
 
     private final Random random = new Random(System.currentTimeMillis());
 
+    private boolean active = false;
+
     @Inject
     public SalesSimulator(final EventBus eventBus) {
         super();
@@ -38,13 +40,22 @@ public class SalesSimulator extends AbstractVerticle {
     @Override
     public void start(final Future<Void> startFuture) throws Exception {
         LOGGER.info("Starting beverages sales simulator...");
+        eventBus.consumer(Addresses.INFRASTRUCTURE.address(), message -> {
+            final String triggerMessage = message.body().toString();
+            if (triggerMessage.equals("TRIGGER-SIMULATOR")) {
+                active = active ? false : true;
+                LOGGER.info("Triggering simulator to: " + (active ? "ON" : "OFF"));
+            }
+        });
         vertx.setPeriodic(1000, timerId -> {
-            final String beverage = BEVERAGES.get(random.nextInt(BEVERAGES.size()));
-            final String amount = String.valueOf(random.nextInt(5));
-            final String terminal = TERMINALS.get(random.nextInt(TERMINALS.size()));
-            final String salesMessage = Joiner.on(":").join(beverage, amount, terminal);
-            eventBus.publish(Addresses.BEVERAGE_SALE.address(), salesMessage);
-            LOGGER.info("Sending sales message: " + salesMessage);
+            if (active) {
+                final String beverage = BEVERAGES.get(random.nextInt(BEVERAGES.size()));
+                final String amount = String.valueOf(random.nextInt(5));
+                final String terminal = TERMINALS.get(random.nextInt(TERMINALS.size()));
+                final String salesMessage = Joiner.on(":").join(beverage, amount, terminal);
+                eventBus.publish(Addresses.BEVERAGE_SALE.address(), salesMessage);
+                LOGGER.info("Sending sales message: " + salesMessage);
+            }
         });
         startFuture.complete();
     }
