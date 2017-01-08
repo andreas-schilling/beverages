@@ -1,11 +1,7 @@
 package org.kiirun.beverages.web;
 
-import java.util.stream.Collectors;
-
 import javax.inject.Inject;
 
-import org.kiirun.beverages.application.BeveragesProperties;
-import org.kiirun.beverages.domain.Beverage;
 import org.kiirun.beverages.service.BeverageSalesQuery;
 import org.kiirun.beverages.service.BeveragesRepository;
 import org.kiirun.beverages.service.BeveragesService;
@@ -19,7 +15,6 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -29,54 +24,37 @@ import io.vertx.ext.web.handler.ErrorHandler;
 public class BeveragesResource extends AbstractVerticle {
     private static final Logger LOGGER = LoggerFactory.getLogger(BeveragesResource.class);
 
-    private final BeveragesProperties properties;
-
     private final BeveragesRepository beveragesRepository;
 
     private final BeveragesService beveragesService;
 
+    private final Router mainRouter;
+
     @Inject
-    public BeveragesResource(final BeveragesProperties properties, final BeveragesRepository beveragesRepository,
-            final BeveragesService beveragesService) {
+    public BeveragesResource(final BeveragesRepository beveragesRepository, final BeveragesService beveragesService,
+            final Router mainRouter) {
         super();
-        this.properties = properties;
         this.beveragesRepository = beveragesRepository;
         this.beveragesService = beveragesService;
+        this.mainRouter = mainRouter;
     }
 
     @Override
     public void start(final Future<Void> startFuture) throws Exception {
         LOGGER.info("Starting beverages server...");
-        final Router router = createRouter();
-        vertx.createHttpServer().requestHandler(router::accept).listen(properties.getHttpPort(), result -> {
-            if (result.succeeded()) {
-                startFuture.complete();
-            } else {
-                startFuture.fail(result.cause());
-            }
-        });
+        mainRouter.mountSubRouter("/api", createRouter());
+        startFuture.complete();
     }
 
     private Router createRouter() {
         final Router router = Router.router(vertx);
-
-        router.route("/").handler(routingContext -> {
-            LOGGER.info("Beverages overview");
-            final HttpServerResponse response = routingContext.response();
-            beveragesRepository.getAllBeverages().setHandler(allBeverages -> {
-                response.putHeader("content-type", "text/html").end("<h1>Beverages</h1><ul><li>"
-                        + allBeverages.result().stream().map(Beverage::getName).collect(Collectors.joining("<li>"))
-                        + "</ul>");
-            });
-        });
-
-        router.get("/api/beverages").handler(this::getAllBeverages);
-        router.post("/api/beverages/:name/sales/:terminal").handler(this::sellBeverage);
-        router.get("/api/beverages/:name/sales").handler(this::getSoldBeverages);
-        router.get("/api/beverages/:name/sales/:terminal").handler(this::getSoldBeverages);
-        router.get("/api/sales").handler(this::getAccumulatedBeverageSales);
-        router.get("/api/sales/:terminal").handler(this::getAccumulatedBeverageSales);
-        router.route("/api/*").failureHandler(ErrorHandler.create());
+        router.get("/beverages").handler(this::getAllBeverages);
+        router.post("/beverages/:name/sales/:terminal").handler(this::sellBeverage);
+        router.get("/beverages/:name/sales").handler(this::getSoldBeverages);
+        router.get("/beverages/:name/sales/:terminal").handler(this::getSoldBeverages);
+        router.get("/sales").handler(this::getAccumulatedBeverageSales);
+        router.get("/sales/:terminal").handler(this::getAccumulatedBeverageSales);
+        router.route("/*").failureHandler(ErrorHandler.create());
 
         return router;
     }

@@ -13,8 +13,8 @@ public class AccumulatedSales {
     private final BigDecimal total;
 
     private AccumulatedSales(final Collection<BeverageSale> sales) {
-        this.salesFigures = sales.stream()
-                .collect(Collectors.groupingBy(BeverageSale::getBeverage, Collectors.counting()));
+        this.salesFigures = sales.stream().collect(
+                Collectors.groupingBy(BeverageSale::getBeverage, Collectors.summingLong(BeverageSale::getAmount)));
         this.total = sales.stream().map(BeverageSale::getTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 

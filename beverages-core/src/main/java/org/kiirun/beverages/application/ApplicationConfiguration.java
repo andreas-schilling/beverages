@@ -17,8 +17,10 @@ import com.google.common.collect.ImmutableMap;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
+import io.vertx.ext.web.Router;
 
 @Configuration
 @EnableConfigurationProperties({ BeveragesProperties.class, MongoDbProperties.class })
@@ -37,9 +39,22 @@ public class ApplicationConfiguration {
 
     @Inject
     @Bean
-    public BeveragesResource beveragesResource(final BeveragesProperties properties,
-            final BeveragesRepository beveragesRepository, final BeveragesService beveragesService) {
-        return new BeveragesResource(properties, beveragesRepository, beveragesService);
+    public HttpServer httpServer(final BeveragesProperties properties) {
+        final HttpServer httpServer = vertx().createHttpServer().requestHandler(mainRouter()::accept);
+        httpServer.listen(properties.getHttpPort());
+        return httpServer;
+    }
+
+    @Bean
+    public Router mainRouter() {
+        return Router.router(vertx());
+    }
+
+    @Inject
+    @Bean
+    public BeveragesResource beveragesResource(final BeveragesRepository beveragesRepository,
+            final BeveragesService beveragesService) {
+        return new BeveragesResource(beveragesRepository, beveragesService, mainRouter());
     }
 
     @Inject
