@@ -30,7 +30,7 @@ public class AccumulatedSalesTest {
     }
 
     @Test
-    public void multipleSaleSYieldCorrectResult() {
+    public void multipleSalesYieldCorrectResult() {
         final AccumulatedSales multipleSales = AccumulatedSales
                 .calculatedFrom(Arrays.asList(sellCoke(2L), sellWater(1L)));
 
