@@ -3,8 +3,6 @@ package org.kiirun.beverages.simulator;
 import java.util.List;
 import java.util.Random;
 
-import javax.inject.Inject;
-
 import org.kiirun.beverages.infrastructure.Addresses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +29,6 @@ public class SalesSimulator extends AbstractVerticle {
 
     private boolean active = false;
 
-    @Inject
     public SalesSimulator(final EventBus eventBus) {
         super();
         this.eventBus = eventBus;

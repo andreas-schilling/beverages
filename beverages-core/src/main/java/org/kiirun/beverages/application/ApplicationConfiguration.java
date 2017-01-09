@@ -1,7 +1,5 @@
 package org.kiirun.beverages.application;
 
-import javax.inject.Inject;
-
 import org.kiirun.beverages.service.BeveragesRepository;
 import org.kiirun.beverages.service.BeveragesService;
 import org.kiirun.beverages.simulator.SalesSimulator;
@@ -37,7 +35,6 @@ public class ApplicationConfiguration {
         return vertx().eventBus();
     }
 
-    @Inject
     @Bean
     public HttpServer httpServer(final BeveragesProperties properties) {
         final HttpServer httpServer = vertx().createHttpServer().requestHandler(mainRouter()::accept);
@@ -50,20 +47,17 @@ public class ApplicationConfiguration {
         return Router.router(vertx());
     }
 
-    @Inject
     @Bean
     public BeveragesResource beveragesResource(final BeveragesRepository beveragesRepository,
             final BeveragesService beveragesService) {
         return new BeveragesResource(beveragesRepository, beveragesService, mainRouter(), eventBus());
     }
 
-    @Inject
     @Bean
     public BeveragesRepository beveragesRepository(final MongoClient mongoClient) {
         return new BeveragesRepository(mongoClient);
     }
 
-    @Inject
     @Bean
     public BeveragesService beveragesService(final BeveragesRepository beveragesRepository) {
         return new BeveragesService(beveragesRepository, eventBus());
@@ -75,7 +69,6 @@ public class ApplicationConfiguration {
         return new SalesSimulator(eventBus());
     }
 
-    @Inject
     @Bean
     @DependsOn("mongo")
     public MongoClient mongoClient(final MongoDbProperties commonProperties, final BeveragesProperties properties) {

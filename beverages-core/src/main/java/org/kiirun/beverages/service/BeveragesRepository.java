@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import javax.inject.Inject;
-
 import org.kiirun.beverages.domain.Beverage;
 import org.kiirun.beverages.domain.BeverageSale;
 import org.slf4j.Logger;
@@ -31,7 +29,6 @@ public class BeveragesRepository extends AbstractVerticle {
 
     private final MongoClient mongoClient;
 
-    @Inject
     public BeveragesRepository(final MongoClient mongoClient) {
         super();
         this.mongoClient = mongoClient;

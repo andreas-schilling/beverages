@@ -25,14 +25,12 @@ dependencies {
     compile "io.vertx:vertx-core:${vertxVersion}"
     compile "io.vertx:vertx-web:${vertxVersion}"
     compile "io.vertx:vertx-mongo-client:${vertxVersion}"
-    compile "javax.inject:javax.inject:1"
     compile "org.springframework.boot:spring-boot-starter:${springBootVersion}"
     compile "org.springframework.boot:spring-boot-starter-data-mongodb:${springBootVersion}"
     compile "de.flapdoodle.embed:de.flapdoodle.embed.mongo:1.50.5"
 
     testCompile "junit:junit:4.12"
     testCompile "org.hamcrest:hamcrest-all:1.3"
-    
 }
 
 mainClassName = 'org.kiirun.beverages.application.Application'

@@ -2,8 +2,6 @@ package org.kiirun.beverages.service;
 
 import java.util.List;
 
-import javax.inject.Inject;
-
 import org.kiirun.beverages.domain.AccumulatedSales;
 import org.kiirun.beverages.domain.BeverageSale;
 import org.kiirun.beverages.infrastructure.Addresses;
@@ -25,7 +23,6 @@ public class BeveragesService extends AbstractVerticle {
 
     private final EventBus eventBus;
 
-    @Inject
     public BeveragesService(final BeveragesRepository beveragesRepository, final EventBus eventBus) {
         super();
         this.beveragesRepository = beveragesRepository;

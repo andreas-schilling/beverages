@@ -1,7 +1,5 @@
 package org.kiirun.beverages.web;
 
-import javax.inject.Inject;
-
 import org.kiirun.beverages.infrastructure.Addresses;
 import org.kiirun.beverages.service.BeverageSalesQuery;
 import org.kiirun.beverages.service.BeveragesRepository;
@@ -34,7 +32,6 @@ public class BeveragesResource extends AbstractVerticle {
 
     private final EventBus eventBus;
 
-    @Inject
     public BeveragesResource(final BeveragesRepository beveragesRepository, final BeveragesService beveragesService,
             final Router mainRouter, final EventBus eventBus) {
         super();
